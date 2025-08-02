@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards para Sabrina</title>
+    <style>
+        /* Estilos CSS */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        .controls {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .card-set-selector {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 20px;
+            height: 300px;
+        }
+        
+        .flashcard {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: white;
+        }
+        
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background-color: #f8f9fa;
+        }
+        
+        .card-content {
+            font-size: 24px;
+            text-align: center;
+            word-break: break-word;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .progress {
+            text-align: center;
+            margin-top: 10px;
+            color: #7f8c8d;
+        }
+        
+        /* Estilos para el editor de flashcards */
+        .editor {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .editor h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .card-list {
+            margin-top: 20px;
+        }
+        
+        .card-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .card-item button {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+        }
+        
+        .card-item button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flashcards para Sabrina</h1>
+        
+        <div class="controls">
+            <div class="card-set-selector">
+                <label for="cardSet">Seleccionar conjunto:</label>
+                <select id="cardSet" class="form-control">
+                    <option value="Pronombres">Pronombres</option>
+                    <option value="Biomas">Biomas</option>
+                    <option value="Tiempo">Expresiones de tiempo</option>
+                    <option value="Verbos">Verbos</option>
+                    <option value="Reglas">Reglas Gramaticales</option>
+                </select>
+            </div>
+            
+            <button id="prevBtn">Anterior</button>
+            <button id="flipBtn">Voltear</button>
+            <button id="nextBtn">Siguiente</button>
+            <button id="editBtn">Editar Flashcards</button>
+        </div>
+        
+        <div class="flashcard-container">
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-front">
+                    <div class="card-content" id="front-content">Cargando...</div>
+                </div>
+                <div class="flashcard-back">
+                    <div class="card-content" id="back-content"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="progress">
+            <span id="current-card">1</span> / <span id="total-cards">0</span>
+        </div>
+        
+        <div class="editor" id="editor">
+            <h2>Editor de Flashcards</h2>
+            
+            <div class="form-group">
+                <label for="new-card-set">Nombre del conjunto:</label>
+                <input type="text" id="new-card-set" placeholder="Ej: Vocabulario de Historia">
+            </div>
+            
+            <div class="form-group">
+                <label for="front-text">Frente:</label>
+                <textarea id="front-text" placeholder="Texto que aparecerá al frente de la flashcard"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="back-text">Reverso:</label>
+                <textarea id="back-text" placeholder="Texto que aparecerá al reverso de la flashcard"></textarea>
+            </div>
+            
+            <button id="add-card-btn">Agregar Flashcard</button>
+            <button id="save-set-btn">Guardar Conjunto</button>
+            <button id="cancel-edit-btn">Cancelar</button>
+            
+            <div class="card-list" id="card-list">
+                <!-- Aquí se mostrarán las flashcards existentes -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos de ejemplo para las flashcards
+        const cardSets = {
+            Pronombres: [
+                { front: "I", back: "Yo" },
+                { front: "He", back: "Él" },
+                { front: "She", back: "Ella" },
+                { front: "It", back: "Eso" },
+                { front: "You (singular)", back: "Usted/Tú" },
+            { front: "We", back: "Nosotros" },
+            { front: "They", back: "Ellos" },
+            { front: "You (plural)", back: "Ustedes" }
+            ],
+            Biomas: [
+                { front: "Jungle", back: "Jungla" },
+                { front: "Beach", back: "Playa" },
+                { front: "Mountain", back: "Montaña" },
+            { front: "Ocean", back: "Océano" },
+            { front: "Island", back: "Isla" },
+            { front: "River", back: "Río" },
+            { front: "Desert", back: "Desierto" },
+            { front: "Volcano", back: "Volcán" }
+            ],
+            Tiempo: [
+                { front: "Yesterday", back: "Ayer" },
+                { front: "Ago", back: "Atrás" },
+                { front: "Last", back: "Última" },
+                { front: "Mourning", back: "Mañana (por la mañana)" },
+                { front: "Afternoon", back: "Tarde (por la tarde)" },
+            { front: "Evening", back: "Noche (por la noche)" },
+            { front: "Tomorrow", back: "Mañana" },
+            { front: "Night", back: "Noche" },
+            { front: "Year", back: "Año" }
+            ],
+            Verbos: [
+                { front: "Form", back: "Forma" },
+                { front: "Create", back: "Crear" },
+                { front: "Try", back: "Intentar" },
+                { front: "Stop", back: "Detener" },
+                { front: "Finish", back: "Finalizar" },
+            { front: "Follow", back: "Seguir" },
+            { front: "Have", back: "Tener" },
+            { front: "Run", back: "Correr" },
+            { front: "Eat", back: "Comer" },
+            { front: "Tell", back: "Decir" },
+            { front: "Spend", back: "Gastar" },
+            { front: "Go", back: "Ir" }
+            ],
+            Reglas: [
+                { front: "Form", back: "Formed (+ed)" },
+                { front: "Create", back: "Created (termina en e +d)" },
+                { front: "Try", back: "Tried (-y reemplaza por +ied)" },
+                { front: "Stop", back: "Stopped (se duplica consonante +ed)" },
+                { front: "Finish", back: "Finished (no se duplica consonante por terminar con dos y +ed)" },
+            { front: "Follow", back: "Followed (no se duplica al terminar en consonante w,x o y y +ed)" },
+            { front: "Have", back: "Had (irregular)" },
+            { front: "Run", back: "Ran (irregular)" },
+            { front: "Eat", back: "Ate (irregular)" },
+            { front: "Tell", back: "Told (irregular)" },
+            { front: "Spend", back: "Spent (irregular)" },
+            { front: "Go", back: "Went (irregular)" },
+            { front: "Volcano (en plural?)", back: "Volcanoes (termina en -o precedido por consonante se agrega -es. Exepceto radio que es radios)" }
+            ]
+        };
+        
+        // Variables de estado
+        let currentSet = 'Pronombres';
+        let currentCardIndex = 0;
+        let isEditing = false;
+        
+        // Elementos del DOM
+        const flashcardElement = document.getElementById('flashcard');
+        const frontContent = document.getElementById('front-content');
+        const backContent = document.getElementById('back-content');
+        const currentCardDisplay = document.getElementById('current-card');
+        const totalCardsDisplay = document.getElementById('total-cards');
+        const cardSetSelect = document.getElementById('cardSet');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const flipBtn = document.getElementById('flipBtn');
+        const editBtn = document.getElementById('editBtn');
+        const editor = document.getElementById('editor');
+        const frontText = document.getElementById('front-text');
+        const backText = document.getElementById('back-text');
+        const addCardBtn = document.getElementById('add-card-btn');
+        const saveSetBtn = document.getElementById('save-set-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const cardList = document.getElementById('card-list');
+        const newCardSet = document.getElementById('new-card-set');
+        
+        // Funciones
+        function loadCardSet(setId) {
+            currentSet = setId;
+            currentCardIndex = 0;
+            updateCardDisplay();
+        }
+        
+        function updateCardDisplay() {
+            // Primero asegurarse de que la tarjeta esté en posición frontal
+            flashcardElement.classList.remove('flipped');
+            
+            // Actualizar el contenido después de un pequeño retraso
+            setTimeout(() => {
+                const cards = cardSets[currentSet];
+                if (cards && cards.length > 0) {
+                    frontContent.textContent = cards[currentCardIndex].front;
+                    backContent.textContent = cards[currentCardIndex].back;
+                    currentCardDisplay.textContent = currentCardIndex + 1;
+                    totalCardsDisplay.textContent = cards.length;
+                } else {
+                    frontContent.textContent = "No hay flashcards en este conjunto";
+                    backContent.textContent = "";
+                    currentCardDisplay.textContent = "0";
+                    totalCardsDisplay.textContent = "0";
+                }
+            }, 10);
+        }
+        
+        function showNextCard() {
+            const cards = cardSets[currentSet];
+            if (cards && cards.length > 0) {
+                currentCardIndex = (currentCardIndex + 1) % cards.length;
+                updateCardDisplay();
+            }
+        }
+        
+        function showPrevCard() {
+            const cards = cardSets[currentSet];
+            if (cards && cards.length > 0) {
+                currentCardIndex = (currentCardIndex - 1 + cards.length) % cards.length;
+                updateCardDisplay();
+            }
+        }
+        
+        function flipCard() {
+            flashcardElement.classList.toggle('flipped');
+        }
+        
+        function toggleEditor() {
+            isEditing = !isEditing;
+            if (isEditing) {
+                editor.style.display = 'block';
+                newCardSet.value = currentSet in cardSets ? currentSet : '';
+                renderCardList();
+            } else {
+                editor.style.display = 'none';
+            }
+        }
+        
+        function renderCardList() {
+            cardList.innerHTML = '';
+            const cards = cardSets[currentSet] || [];
+            
+            cards.forEach((card, index) => {
+                const cardItem = document.createElement('div');
+                cardItem.className = 'card-item';
+                
+                const cardText = document.createElement('div');
+                cardText.textContent = `${card.front} / ${card.back}`;
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Eliminar';
+                deleteBtn.onclick = () => deleteCard(index);
+                
+                cardItem.appendChild(cardText);
+                cardItem.appendChild(deleteBtn);
+                cardList.appendChild(cardItem);
+            });
+        }
+        
+        function addCard() {
+            const front = frontText.value.trim();
+            const back = backText.value.trim();
+            
+            if (front && back) {
+                if (!cardSets[currentSet]) {
+                    cardSets[currentSet] = [];
+                }
+                
+                cardSets[currentSet].push({ front, back });
+                frontText.value = '';
+                backText.value = '';
+                renderCardList();
+                
+                if (cardSets[currentSet].length === 1) {
+                    currentCardIndex = 0;
+                    updateCardDisplay();
+                }
+            } else {
+                alert('Por favor ingresa texto tanto en el frente como en el reverso de la flashcard');
+            }
+        }
+        
+        function deleteCard(index) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta flashcard?')) {
+                cardSets[currentSet].splice(index, 1);
+                renderCardList();
+                
+                if (currentCardIndex >= cardSets[currentSet].length) {
+                    currentCardIndex = Math.max(0, cardSets[currentSet].length - 1);
+                }
+                updateCardDisplay();
+            }
+        }
+        
+        function saveCardSet() {
+            const setName = newCardSet.value.trim();
+            if (setName && cardSets[currentSet] && cardSets[currentSet].length > 0) {
+                // Si el nombre ha cambiado, creamos un nuevo conjunto
+                if (setName !== currentSet) {
+                    cardSets[setName] = cardSets[currentSet];
+                    delete cardSets[currentSet];
+                    currentSet = setName;
+                    
+                    // Actualizar el selector
+                    const option = document.createElement('option');
+                    option.value = setName;
+                    option.textContent = setName;
+                    cardSetSelect.appendChild(option);
+                    cardSetSelect.value = setName;
+                }
+                
+                toggleEditor();
+            } else {
+                alert('Por favor ingresa un nombre para el conjunto y asegúrate de que tenga al menos una flashcard');
+            }
+        }
+        
+        // Event Listeners
+        cardSetSelect.addEventListener('change', (e) => {
+            loadCardSet(e.target.value);
+        });
+        
+        prevBtn.addEventListener('click', showPrevCard);
+        nextBtn.addEventListener('click', showNextCard);
+        flipBtn.addEventListener('click', flipCard);
+        flashcardElement.addEventListener('click', flipCard);
+        editBtn.addEventListener('click', toggleEditor);
+        addCardBtn.addEventListener('click', addCard);
+        saveSetBtn.addEventListener('click', saveCardSet);
+        cancelEditBtn.addEventListener('click', toggleEditor);
+        
+        // Inicialización
+        loadCardSet(currentSet);
+    </script>
+</body>
+</html>
